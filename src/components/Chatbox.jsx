@@ -14,26 +14,23 @@ const ChatBox = () => {
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
-  
+
     setMessages((prev) => [...prev, { role: "user", text: input }]);
 
-  try {
-    const response = await fetch("http://127.0.0.1:8000/ask/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: input }), // Correct JSON format
-    });
+    try {
+      const response = await axios.post("http://127.0.0.1:8000/ask/", {
+        question: input, // 🔹 Update key to match Postman request
+      }, {
+        headers: { "Content-Type": "application/json" }
+      });
 
-    if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+      setMessages((prev) => [...prev, { role: "bot", text: response.data.answer }]);
+    } catch (error) {
+      console.error("API error:", error);
+      setMessages((prev) => [...prev, { role: "bot", text: "Error fetching response!" }]);
+    }
 
-    const data = await response.json();
-    setMessages((prev) => [...prev, { role: "bot", text: data.answer }]);
-  } catch (error) {
-    console.error("Fetch error:", error);
-    setMessages((prev) => [...prev, { role: "bot", text: "Error fetching response!" }]);
-  }
-
-  setInput("");
+    setInput("");
   };
 
   const handleFileUpload = (event) => {
@@ -54,7 +51,7 @@ const ChatBox = () => {
   return (
     <div className="flex flex-col flex-1 p-6 bg-white shadow-lg rounded-lg">
       <div className="chat-header text-lg font-semibold mb-4 text-center">Legal PDF Chatbot</div>
-      
+
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner">
         {messages.map((msg, index) => (
